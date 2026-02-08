@@ -1,6 +1,8 @@
-"""Health check routes."""
+from fastapi import APIRouter
+
+router = APIRouter()
 
 
-def healthcheck() -> dict:
-    """Return a simple health status payload."""
+@router.get("/health")
+def health():
     return {"status": "ok"}

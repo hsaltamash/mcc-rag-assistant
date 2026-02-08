@@ -1,7 +1,7 @@
 # MCC RAG Assistant
 
-A scaffolded layout for a Retrieval-Augmented Generation (RAG) assistant. This repository is organized
-around a modular `app/` package with ingestion, RAG, integrations, and API route stubs.
+A production-leaning scaffold for a Retrieval-Augmented Generation (RAG) assistant built with
+FastAPI, Chroma, and OpenAI.
 
 ## Structure
 
@@ -50,5 +50,22 @@ mcc-rag-assistant/
 ## Quick start
 
 ```bash
-python app/main.py
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+
+cp .env.example .env
+# edit .env and paste OPENAI_API_KEY
+
+python -c "from pathlib import Path; from app.ingestion.ingest import ingest_path; print(ingest_path(Path('docs/seed/parking.md')))"
+
+bash scripts/run_dev.sh
+```
+
+### Test the API
+
+```bash
+curl -X POST http://localhost:8000/chat \
+  -H "Content-Type: application/json" \
+  -d '{"question":"If parking is full, where should I park and is there a shuttle?"}'
 ```

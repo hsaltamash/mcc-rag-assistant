@@ -1,14 +1,16 @@
-"""Document loading utilities."""
-
 from pathlib import Path
-from typing import List
+from pypdf import PdfReader
 
 
-def load_markdown(path: Path) -> str:
-    """Load a markdown file from disk."""
-    return path.read_text(encoding="utf-8")
+def load_text_from_file(path: Path) -> str:
+    if path.suffix.lower() in [".md", ".txt"]:
+        return path.read_text(encoding="utf-8", errors="ignore")
 
+    if path.suffix.lower() == ".pdf":
+        reader = PdfReader(str(path))
+        parts = []
+        for page in reader.pages:
+            parts.append(page.extract_text() or "")
+        return "\n".join(parts)
 
-def load_markdown_dir(directory: Path) -> List[str]:
-    """Load all markdown files in a directory."""
-    return [load_markdown(path) for path in sorted(directory.glob("*.md"))]
+    raise ValueError(f"Unsupported file type: {path.suffix}")

@@ -1,14 +1,16 @@
-"""Main application entrypoint."""
+from fastapi import FastAPI
+from app.core.logging import setup_logging
+from app.api.routes_health import router as health_router
+from app.api.routes_chat import router as chat_router
 
-from app.core.config import settings
-from app.core.logging import configure_logging
+log = setup_logging()
+
+app = FastAPI(title="MCC RAG Assistant")
+
+app.include_router(health_router)
+app.include_router(chat_router)
 
 
-def run() -> None:
-    """Initialize logging and print a startup message."""
-    configure_logging()
-    print(f"MCC RAG Assistant starting in {settings.environment} mode")
-
-
-if __name__ == "__main__":
-    run()
+@app.on_event("startup")
+def on_startup():
+    log.info("app_started")

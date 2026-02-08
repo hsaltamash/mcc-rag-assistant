@@ -1,15 +1,58 @@
-"""Question answering orchestration."""
-
-from typing import List
-
-from app.rag.chunking import chunk_text
+from openai import OpenAI
+from app.core.config import settings
 from app.rag.embeddings import embed_texts
-from app.rag.vector_store import build_records
+from app.rag.vector_store import get_collection
+from app.rag.strength import compute_strength
+
+_client = OpenAI(api_key=settings.openai_api_key)
+
+SYSTEM = (
+    "You are a grounded assistant.\n"
+    "Use ONLY the provided CONTEXT.\n"
+    "If the answer is not in the context, say: 'Not found in the provided documents.'\n"
+    "Cite sources like [1], [2]."
+)
 
 
-def answer_question(question: str, context: str) -> str:
-    """Generate a placeholder answer for a question."""
-    chunks = chunk_text(context)
-    embeddings = embed_texts(chunks)
-    _records = build_records(chunks, embeddings)
-    return f"Answering '{question}' with {len(chunks)} context chunks."
+def answer_question(question: str, top_k: int | None = None) -> dict:
+    col = get_collection()
+    k = top_k or settings.top_k
+
+    q_vec = embed_texts([question])[0]
+    res = col.query(query_embeddings=[q_vec], n_results=k)
+
+    docs = res["documents"][0] if res.get("documents") else []
+    metas = res["metadatas"][0] if res.get("metadatas") else []
+    distances = res["distances"][0] if res.get("distances") else []
+
+    contexts = []
+    for i, (d, m) in enumerate(zip(docs, metas), start=1):
+        src = m.get("source", "unknown")
+        contexts.append({"idx": i, "source": src, "text": d})
+
+    context_block = "\n\n".join(
+        [f"[{c['idx']}] Source: {c['source']}\n{c['text']}" for c in contexts]
+    )
+
+    user_msg = f"CONTEXT:\n{context_block}\n\nQUESTION:\n{question}"
+
+    chat = _client.chat.completions.create(
+        model=settings.openai_chat_model,
+        messages=[
+            {"role": "system", "content": SYSTEM},
+            {"role": "user", "content": user_msg},
+        ],
+        temperature=0.2,
+    )
+
+    answer_text = chat.choices[0].message.content
+    strength, reason = compute_strength(distances, answer_text)
+
+    return {
+        "answer": answer_text,
+        "answer_strength": strength,
+        "strength_reason": reason,
+        "sources": [{"source": c["source"], "idx": c["idx"]} for c in contexts],
+        "distances": distances,
+        "best_distance": distances[0] if distances else None,
+    }
