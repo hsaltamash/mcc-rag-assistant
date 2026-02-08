@@ -1,11 +1,14 @@
-"""Chat routes."""
-
+from fastapi import APIRouter
+from pydantic import BaseModel
 from app.rag.qa import answer_question
-from app.rag.strength import score_strength
+
+router = APIRouter()
 
 
-def chat(question: str, context: str) -> dict:
-    """Answer a chat question using RAG."""
-    answer = answer_question(question, context)
-    strength = score_strength(answer)
-    return {"answer": answer, "strength": strength}
+class ChatRequest(BaseModel):
+    question: str
+
+
+@router.post("/chat")
+def chat(req: ChatRequest):
+    return answer_question(req.question)

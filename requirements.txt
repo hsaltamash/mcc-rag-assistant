@@ -1,1 +1,8 @@
-# Base runtime dependencies
+fastapi
+uvicorn
+pydantic
+python-dotenv
+openai
+chromadb
+pypdf
+structlog
