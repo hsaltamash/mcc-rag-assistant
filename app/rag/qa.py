@@ -55,4 +55,18 @@ def answer_question(question: str, top_k: int | None = None) -> dict:
         "sources": [{"source": c["source"], "idx": c["idx"]} for c in contexts],
         "distances": distances,
         "best_distance": distances[0] if distances else None,
+
+    chat = _client.chat.completions.create(
+        model=settings.openai_chat_model,
+        messages=[
+            {"role": "system", "content": SYSTEM},
+            {"role": "user", "content": user_msg},
+        ],
+        temperature=0.2,
+    )
+
+    return {
+        "answer": chat.choices[0].message.content,
+        "sources": [{"source": c["source"], "idx": c["idx"]} for c in contexts],
+        "distances": distances,
     }
