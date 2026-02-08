@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mcc-rag-assistant"
+version = "0.1.0"
+description = "A minimal RAG assistant scaffold."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Your Name" }]
+dependencies = [
+  "pydantic>=2.5",
+  "rich>=13.7",
+]
+
+[project.optional-dependencies]
+cli = ["typer>=0.12"]
+
+[project.scripts]
+mcc-rag-assistant = "mcc_rag_assistant.cli:app"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
