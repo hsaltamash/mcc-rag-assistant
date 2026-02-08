@@ -1,15 +1,26 @@
-"""Application configuration settings."""
+from pydantic import BaseModel
+from dotenv import load_dotenv
+import os
 
-from dataclasses import dataclass
+load_dotenv()
 
 
-@dataclass(frozen=True)
-class Settings:
-    """Runtime settings for the service."""
+class Settings(BaseModel):
+    app_name: str = "mcc-rag-assistant"
+    environment: str = os.getenv("ENVIRONMENT", "dev")
 
-    environment: str = "development"
-    log_level: str = "INFO"
-    vector_store_path: str = "data/chroma"
+    # OpenAI
+    openai_api_key: str = os.getenv("OPENAI_API_KEY", "")
+    openai_chat_model: str = os.getenv("OPENAI_CHAT_MODEL", "gpt-4o-mini")
+    openai_embed_model: str = os.getenv("OPENAI_EMBED_MODEL", "text-embedding-3-small")
+
+    # Vector store
+    chroma_path: str = os.getenv("CHROMA_PATH", "./data/chroma")
+    collection_name: str = os.getenv("CHROMA_COLLECTION", "mcc_kb")
+
+    # RAG behavior
+    top_k: int = int(os.getenv("TOP_K", "5"))
+    min_similarity: float = float(os.getenv("MIN_SIMILARITY", "0.25"))  # tune later
 
 
 settings = Settings()

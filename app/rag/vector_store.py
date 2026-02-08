@@ -1,17 +1,7 @@
-"""Vector store interface stubs."""
-
-from dataclasses import dataclass
-from typing import List
+import chromadb
+from app.core.config import settings
 
 
-@dataclass
-class VectorRecord:
-    """In-memory vector record."""
-
-    content: str
-    embedding: List[float]
-
-
-def build_records(texts: List[str], embeddings: List[List[float]]) -> List[VectorRecord]:
-    """Create vector records from texts and embeddings."""
-    return [VectorRecord(content=text, embedding=vector) for text, vector in zip(texts, embeddings)]
+def get_collection():
+    client = chromadb.PersistentClient(path=settings.chroma_path)
+    return client.get_or_create_collection(name=settings.collection_name)
