@@ -2,6 +2,7 @@ from openai import OpenAI
 from app.core.config import settings
 from app.rag.embeddings import embed_texts
 from app.rag.vector_store import get_collection
+from app.rag.strength import compute_strength
 
 _client = OpenAI(api_key=settings.openai_api_key)
 
@@ -34,6 +35,26 @@ def answer_question(question: str, top_k: int | None = None) -> dict:
     )
 
     user_msg = f"CONTEXT:\n{context_block}\n\nQUESTION:\n{question}"
+
+    chat = _client.chat.completions.create(
+        model=settings.openai_chat_model,
+        messages=[
+            {"role": "system", "content": SYSTEM},
+            {"role": "user", "content": user_msg},
+        ],
+        temperature=0.2,
+    )
+
+    answer_text = chat.choices[0].message.content
+    strength, reason = compute_strength(distances, answer_text)
+
+    return {
+        "answer": answer_text,
+        "answer_strength": strength,
+        "strength_reason": reason,
+        "sources": [{"source": c["source"], "idx": c["idx"]} for c in contexts],
+        "distances": distances,
+        "best_distance": distances[0] if distances else None,
 
     chat = _client.chat.completions.create(
         model=settings.openai_chat_model,
